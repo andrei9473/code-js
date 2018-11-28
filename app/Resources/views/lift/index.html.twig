@@ -2,7 +2,7 @@
 
 {% block body %}
     <div class="row">
-        <div class="col-md-7">
+        <div class="col-md-7 js-rep-log-table">
             <h2>
                 Lift History
                 <a href="#list-stuff-form" class="btn btn-md btn-success pull-right">
@@ -10,7 +10,7 @@
                 </a>
             </h2>
 
-            <table class="table table-striped js-rep-log-table">
+            <table class="table table-striped">
                 <thead>
                 <tr>
                     <th>What</th>
@@ -21,19 +21,7 @@
                 </thead>
                 <tbody>
                 {% for repLog in repLogs %}
-                    <tr data-weight="{{ repLog.totalWeightLifted }}">
-                        <td>{{ repLog.itemLabel|trans }}</td>
-                        <td>{{ repLog.reps }}</td>
-                        <td>{{ repLog.totalWeightLifted }}</td>
-                        <td>
-                            <a href="#" class="js-delete-rep-log" data-url="{{ path('rep_log_delete', {'id': repLog.id}) }}">
-                                <span class="fa fa-trash"></span>
-                            </a>
-                        </td>
-                        <td>
-                            &nbsp;
-                        </td>
-                    </tr>
+                    {{ include('lift/_repRow.html.twig') }}
                 {% else %}
                     <tr>
                         <td colspan="4">Get liftin'!</td>
@@ -50,7 +38,9 @@
                 </tfoot>
             </table>
 
-            {{ include('lift/_form.html.twig') }}
+            <div class="js-new-rep-log-form-wrapper">
+                {{ include('lift/_form.html.twig') }}
+            </div>
 
         </div>
         <div class="col-md-5">
@@ -68,55 +58,11 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script src="{{ asset('assets/js/RepLogApp.js') }}"></script>
     <script>
-
-    var RepLogApp = {
-        initialize: function($wrapper) {
-            this.$wrapper = $wrapper;
-            this.$wrapper.find('.js-delete-rep-log').on('click',
-                this.handleRepLogDelete
-            );
-            this.$wrapper.find('tbody tr').on('click',
-                this.handleRowClick
-            );
-        },
-
-        updateTotalWeightLifted: function() {
-            var totalWeight = 0;
-            $this.wrapper.find('tbody tr').each(function() {
-                totalWeight += $(this).data('weight');
-            });
-            $(this).wrapper.find('.js-total-weight').html(totalWeight);
-        },
-
-        handleRepLogDelete: function(e) {
-            e.preventDefault();
-            $(this).find(".fa")
-            .removeClass("fa-trash")
-            .addClass("fa-spinner")
-            .addClass("fa-spin");
-            var deleteUrl = $(this).data('url');
-            var $row = $(this).closest('tr');
-            $.ajax({
-                url: deleteUrl,
-                method: "DELETE",
-                success: function() {
-                    $row.fadeOut('normal', function() {
-                        $row.remove();
-                        RepLogApp.updateTotalWeightLifted();
-                    });
-                }
-            });
-        },
-
-        handleRowClick: function() {
-            console.log('row clicked');
-        }
-    };
-
         $(document).ready(function() {
-            var $table = $('.js-rep-log-table');
-            RepLogApp.initialize($table);
+            var $wrapper = $('.js-rep-log-table');
+            RepLogApp = new RepLogApp($wrapper);
         });
     </script>
 
