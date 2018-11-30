@@ -1,9 +1,10 @@
 'use strict';
 
-(function(window, $) {
+(function(window, $, Routing) {
     window.RepLogApp = function($wrapper) {
                 this.$wrapper = $wrapper;
                 this.helper = new Helper($wrapper);
+                this.loadRepLogs();
                 this.$wrapper.on('click',
                     '.js-delete-rep-log',
                     this.handleRepLogDelete.bind(this)
@@ -21,6 +22,18 @@
 
         _selectors: {
             newRepForm: '.js-rep-log-form',
+        },
+
+        loadRepLogs: function() {
+            var self = this;
+            $.ajax({
+                url: Routing.generate('rep_log_list'),
+                success: function(data) {
+                    $.each(data.items, function(key, repLog) {
+                        self._addRow(repLog);
+                    });
+                }
+            });
         },
 
         updateTotalWeightLifted: function() {
@@ -66,8 +79,8 @@
                 method: 'POST',
                 data: JSON.stringify(formData),
                 success: function(data) {
-                    // todo
-                    console.log('success');
+                    self._clearForm();
+                    self._addRow(data);
                 },
                 error: function(jqXHR) {
                     var errorData = JSON.parse(jqXHR.responseText);
@@ -79,8 +92,7 @@
         _mapErrorsToForm: function(errors) {
             var $form = $(this._selectors.newRepForm);
 
-            $form.find('.js-field-error').remove();
-            $form.find('.form-group').removeClass('has-error');
+            this._removeFormErrors();
 
             $form.find(':input').each(function() {
                 var fieldName = $(this).attr('name');
@@ -96,6 +108,26 @@
                 $wrapper.addClass('has-error');
 
             });
+        },
+
+        _removeFormErrors: function() {
+            var $form = $(this._selectors.newRepForm);
+            $form.find('.js-field-error').remove();
+            $form.find('.form-group').removeClass('has-error');
+        },
+
+        _clearForm: function() {
+            var $form = $(this._selectors.newRepForm);
+            this._removeFormErrors();
+            $form[0].reset();
+        },
+
+        _addRow: function(repLog) {
+            var tmpText = $('#js-rep-log-row-template').html();
+            var tmp = _.template(tmpText);
+            var html = tmp(repLog);
+            this.$wrapper.find('tbody').append($.parseHTML(html));
+            this.updateTotalWeightLifted();
         }
 
     });
@@ -113,4 +145,4 @@
             }
         });
 
-})(window, jQuery);
+})(window, jQuery, Routing);
