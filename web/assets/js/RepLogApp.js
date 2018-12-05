@@ -1,6 +1,6 @@
 'use strict';
 
-(function(window, $, Routing) {
+(function(window, $, Routing, swal) {
     window.RepLogApp = function($wrapper) {
                 this.$wrapper = $wrapper;
                 this.helper = new Helper($wrapper);
@@ -27,12 +27,11 @@
         loadRepLogs: function() {
             var self = this;
             $.ajax({
-                url: Routing.generate('rep_log_list'),
-                success: function(data) {
+                url: Routing.generate('rep_log_list')
+            }).then(function(data) {
                     $.each(data.items, function(key, repLog) {
                         self._addRow(repLog);
                     });
-                }
             });
         },
 
@@ -43,23 +42,46 @@
 
         handleRepLogDelete: function(e) {
             e.preventDefault();
-            $(e.currentTarget).find(".fa")
+            var $link = $(e.currentTarget);
+            var self = this;
+            swal({
+              title: 'Delete this log?',
+              text: "What? Did you not actualy lift this?",
+              type: 'warning',
+              showCancelButton: true,
+              showCloseButton: true,
+              showLoaderOnConfirm: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Yes, delete it!',
+              preConfirm: function() {
+                return self._deleteRepLog($link);
+              }
+            }).then((result) => {
+               if(result.dismiss === swal.DismissReason.cancel) {
+                console.log('Canceled!!!');
+              }
+            });
+
+        },
+
+        _deleteRepLog: function($link) {
+            $link.find(".fa")
             .removeClass("fa-trash")
             .addClass("fa-spinner")
             .addClass("fa-spin");
-            var deleteUrl = $(e.currentTarget).data('url');
-            var $row = $(e.currentTarget).closest('tr');
+            var deleteUrl = $link.data('url');
+            var $row = $link.closest('tr');
             var self = this;
             $.ajax({
                 url: deleteUrl,
-                method: "DELETE",
-                success: function() {
-                    $row.fadeOut('normal', function() {
-                        $row.remove();
-                        self.updateTotalWeightLifted();
+                method: "DELETE"
+            }).then(function() { 
+                $row.fadeOut('normal', function() {
+                    $row.remove();
+                    self.updateTotalWeightLifted();
                     });
-                }
-            });
+                });
         },
 
         handleRowClick: function() {
@@ -74,18 +96,12 @@
             $.each($form.serializeArray(), function(key, fieldData) {
                 formData[fieldData.name] = fieldData.value;
             });
-            $.ajax({
-                url: $form.data('url'),
-                method: 'POST',
-                data: JSON.stringify(formData),
-                success: function(data) {
-                    self._clearForm();
-                    self._addRow(data);
-                },
-                error: function(jqXHR) {
-                    var errorData = JSON.parse(jqXHR.responseText);
-                    self._mapErrorsToForm(errorData.errors);
-                }
+            this._saveRepLog(formData).then(function(data) {
+                self._clearForm();
+                self._addRow(data);
+            }).catch(function(jqXHR) {
+                var errorData = $.parseJSON(jqXHR.responseText);
+                self._mapErrorsToForm(errorData.errors);
             });
         },
 
@@ -128,6 +144,18 @@
             var html = tmp(repLog);
             this.$wrapper.find('tbody').append($.parseHTML(html));
             this.updateTotalWeightLifted();
+        },
+
+        _saveRepLog: function(data) {
+            return $.ajax({
+                url: Routing.generate('rep_log_new'),
+                method: 'POST',
+                data: JSON.stringify(data)
+            }).then(function(data, textStatus, jqXHR) {
+                return $.ajax({
+                    url: jqXHR.getResponseHeader('Location')
+                });
+            });
         }
 
     });
@@ -145,4 +173,4 @@
             }
         });
 
-})(window, jQuery, Routing);
+})(window, jQuery, Routing, swal);

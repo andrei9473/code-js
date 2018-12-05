@@ -38,7 +38,7 @@ class RepLogController extends BaseController
     }
 
     /**
-     * @Route("/reps/{id}", name="rep_log_delete")
+     * @Route("/reps/{id}", name="rep_log_delete", options={"expose"=true})
      * @Method("DELETE")
      */
     public function deleteRepLogAction(RepLog $repLog)
@@ -52,7 +52,7 @@ class RepLogController extends BaseController
     }
 
     /**
-     * @Route("/reps", name="rep_log_new")
+     * @Route("/reps", name="rep_log_new", options={"expose"=true})
      * @Method("POST")
      */
     public function newRepLogAction(Request $request)
@@ -78,13 +78,14 @@ class RepLogController extends BaseController
         /** @var RepLog $repLog */
         $repLog = $form->getData();
         $repLog->setUser($this->getUser());
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->getDoctrine()->getManager();   
         $em->persist($repLog);
         $em->flush();
 
         $apiModel = $this->createRepLogApiModel($repLog);
 
-        $response = $this->createApiResponse($apiModel);
+        // $response = $this->createApiResponse($apiModel);
+        $response = new Response(null, 204);
         // setting the Location header... it's a best-practice
         $response->headers->set(
             'Location',
