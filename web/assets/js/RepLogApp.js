@@ -25,12 +25,11 @@
         },
 
         loadRepLogs: function() {
-            var self = this;
             $.ajax({
                 url: Routing.generate('rep_log_list')
-            }).then(function(data) {
-                    $.each(data.items, function(key, repLog) {
-                        self._addRow(repLog);
+            }).then(data => {
+                    $.each(data.items, (key, repLog) => {
+                        this._addRow(repLog);
                     });
             });
         },
@@ -43,7 +42,6 @@
         handleRepLogDelete: function(e) {
             e.preventDefault();
             var $link = $(e.currentTarget);
-            var self = this;
             swal({
               title: 'Delete this log?',
               text: "What? Did you not actualy lift this?",
@@ -54,10 +52,8 @@
               confirmButtonColor: '#3085d6',
               cancelButtonColor: '#d33',
               confirmButtonText: 'Yes, delete it!',
-              preConfirm: function() {
-                return self._deleteRepLog($link);
-              }
-            }).then((result) => {
+              preConfirm: () => this._deleteRepLog($link)
+            }).then(result => {
                if(result.dismiss === swal.DismissReason.cancel) {
                 console.log('Canceled!!!');
               }
@@ -72,14 +68,13 @@
             .addClass("fa-spin");
             var deleteUrl = $link.data('url');
             var $row = $link.closest('tr');
-            var self = this;
             $.ajax({
                 url: deleteUrl,
                 method: "DELETE"
-            }).then(function() { 
-                $row.fadeOut('normal', function() {
+            }).then(() => { 
+                $row.fadeOut('normal', () => {
                     $row.remove();
-                    self.updateTotalWeightLifted();
+                    this.updateTotalWeightLifted();
                     });
                 });
         },
@@ -92,16 +87,15 @@
             e.preventDefault();
             var $form = $(this._selectors.newRepForm);
             var formData = {};
-            var self = this;
-            $.each($form.serializeArray(), function(key, fieldData) {
+            $.each($form.serializeArray(), (key, fieldData) => {
                 formData[fieldData.name] = fieldData.value;
             });
-            this._saveRepLog(formData).then(function(data) {
-                self._clearForm();
-                self._addRow(data);
-            }).catch(function(jqXHR) {
+            this._saveRepLog(formData).then(data => {
+                this._clearForm();
+                this._addRow(data);
+            }).catch(jqXHR => {
                 var errorData = $.parseJSON(jqXHR.responseText);
-                self._mapErrorsToForm(errorData.errors);
+                this._mapErrorsToForm(errorData.errors);
             });
         },
 
@@ -110,9 +104,9 @@
 
             this._removeFormErrors();
 
-            $form.find(':input').each(function() {
-                var fieldName = $(this).attr('name');
-                var $wrapper = $(this).closest('.form-group');
+            $form.find(':input').each((key, value) => {
+                var fieldName = $(value).attr('name');
+                var $wrapper = $(value).closest('.form-group');
                 if(!errors[fieldName]) {
                     // no errors
                     return;
@@ -151,7 +145,7 @@
                 url: Routing.generate('rep_log_new'),
                 method: 'POST',
                 data: JSON.stringify(data)
-            }).then(function(data, textStatus, jqXHR) {
+            }).then((data, textStatus, jqXHR) => {
                 return $.ajax({
                     url: jqXHR.getResponseHeader('Location')
                 });
@@ -166,8 +160,8 @@
         $.extend(Helper.prototype, {
             calculateTotalWeight: function($wrapper) {
                 var totalWeight = 0;
-                $wrapper.find('tbody tr').each(function() {
-                    totalWeight += $(this).data('weight');
+                $wrapper.find('tbody tr').each((key, value) => {
+                    totalWeight += $(value).data('weight');
                 });
                 return totalWeight;
             }
