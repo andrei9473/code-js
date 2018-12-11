@@ -1,8 +1,7 @@
-let ar = [1, 2, 3, 4, 5];
+let array = new Set();
 
-let result = ar.reduce((sum, current) => {
-	console.log(sum, current);
-	return sum + current;
-});
+array.add('gelato');
+array.add('cloud');
+array.add('gelato');
 
-console.log(result);
+console.log(array);

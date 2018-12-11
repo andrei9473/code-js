@@ -2,11 +2,14 @@
 
 (function(window, $, Routing, swal) {
 
+    let helperInstances = new WeakMap();
+
     class RepLogApp {
 
         constructor($wrapper) {
+                    this.repLogs = [];
                     this.$wrapper = $wrapper;
-                    this.helper = new Helper($wrapper);
+                    helperInstances.set(this, new Helper(this.repLogs));
                     this.loadRepLogs();
                     this.$wrapper.on('click',
                         '.js-delete-rep-log',
@@ -32,14 +35,14 @@
             $.ajax({
                 url: Routing.generate('rep_log_list')
             }).then(data => {
-                    $.each(data.items, (key, repLog) => {
-                        this._addRow(repLog);
-                    });
+                    for(let item of data.items) {
+                        this._addRow(item);
+                    }
             });
         }
 
         updateTotalWeightLifted() {
-            const totalWeight = this.helper.totalWeightString();
+            const totalWeight = helperInstances.get(this).totalWeightString();
             this.$wrapper.find('.js-total-weight').html(totalWeight);
         }
 
@@ -90,9 +93,9 @@
             e.preventDefault();
             const $form = $(RepLogApp._selectors.newRepForm);
             const formData = {};
-            $.each($form.serializeArray(), (key, fieldData) => {
+            for(let fieldData of $form.serializeArray()) {
                 formData[fieldData.name] = fieldData.value;
-            });
+            }
             this._saveRepLog(formData).then(data => {
                 this._clearForm();
                 this._addRow(data);
@@ -106,13 +109,12 @@
             const $form = $(RepLogApp._selectors.newRepForm);
 
             this._removeFormErrors();
-
-            $form.find(':input').each((key, value) => {
+            for(let value of $form.find(':input')) {
                 const fieldName = $(value).attr('name');
                 const $wrapper = $(value).closest('.form-group');
                 if(!errors[fieldName]) {
                     // no errors
-                    return;
+                    continue;
                 }
 
                 const $error = $('<span class="js-field-error help-block"></span>');
@@ -120,7 +122,7 @@
                 $wrapper.append($error);
                 $wrapper.addClass('has-error');
 
-            });
+            }
         }
 
         _removeFormErrors() {
@@ -136,6 +138,7 @@
         }
 
         _addRow(repLog) {
+            this.repLogs.push(repLog);
             const html = rowTemplate(repLog);
             this.$wrapper.find('tbody').append($.parseHTML(html));
             this.updateTotalWeightLifted();
@@ -157,24 +160,24 @@
 
     class Helper {
 
-        constructor($wrapper) {
-                this.$wrapper = $wrapper;
+        constructor(repLogs) {
+                this.repLogs = repLogs;
             }
 
-        calculateTotalWeight($wrapper) {
-            return Helper._calculateWeight($wrapper.find('tbody tr'));
+        calculateTotalWeight(repLogs) {
+            return Helper._calculateWeight(repLogs);
         }
 
-        static _calculateWeight($elements) {
+        static _calculateWeight(repLogs) {
             let totalWeight = 0;
-            $elements.each((key, value) => {
-                totalWeight += $(value).data('weight');
-            });
+            for(let repLog of repLogs) {
+                totalWeight += repLog.totalWeightLifted;
+            }
             return totalWeight;
         }
 
         totalWeightString(maxWeight = 500) {
-            const weight = this.calculateTotalWeight(this.$wrapper);
+            const weight = this.calculateTotalWeight(this.repLogs);
             if(weight > maxWeight) {
                 return maxWeight + '+' + ' lbs';
             }
