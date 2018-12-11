@@ -1,27 +1,8 @@
-class AGreatClass {
-    constructor(greatNumber) {
-        this.greatNumber = greatNumber;
-    }
-    returnGreatThings() {
-        return this.greatNumber;
-    }
-}
+let ar = [1, 2, 3, 4, 5];
 
+let result = ar.reduce((sum, current) => {
+	console.log(sum, current);
+	return sum + current;
+});
 
-class AnotherGreatClass extends AGreatClass {
-
-	constructor(greatNumber, greatWord) {
-		super(greatNumber);
-		this.greatWord = greatWord;
-	}
-
-	returnGreatThings() {
-		//let greatNumber = super.returnGreatThings();
-		return [this.greatNumber, this.greatWord];
-	}
-}
-
-const aGreatObject = new AnotherGreatClass(42, "word");
-console.log(
-    aGreatObject.returnGreatThings()
-);
+console.log(result);
